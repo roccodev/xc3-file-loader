@@ -1,0 +1,26 @@
+[package]
+name = "xc3-file-loader"
+version = "0.1.0"
+authors = ["RoccoDev <hey@rocco.dev>"]
+edition = "2021"
+license = "gpl-3.0"
+
+[package.metadata.skyline]
+titleid = "010074F013262000" # Xenoblade Chronicles 3
+package-resources = [
+    { local = "res/empty-file", package = "/atmosphere/contents/010074F013262000/romfs/patched/.put-files-here" }
+]
+custom-npdm = "res/npdm/xc3.npdm"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+skyline = { git = "https://github.com/ultimate-research/skyline-rs.git" }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
