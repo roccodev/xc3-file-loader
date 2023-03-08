@@ -1,3 +1,4 @@
 target/
 install_xc3.sh
 install_xc3_yuzu.sh
+/.idea
