@@ -8,7 +8,7 @@ license = "gpl-3.0"
 [package.metadata.skyline]
 titleid = "010074F013262000" # Xenoblade Chronicles 3
 package-resources = [
-    { local = "res/empty-file", package = "/atmosphere/contents/010074F013262000/romfs/patched/.put-files-here" }
+    { local = "res/empty-file", package = "/atmosphere/contents/010074F013262000/romfs/.put-files-here" }
 ]
 custom-npdm = "res/npdm/xc3.npdm"
 
