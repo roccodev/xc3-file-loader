@@ -1,6 +1,6 @@
 [package]
 name = "xc3-file-loader"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["RoccoDev <hey@rocco.dev>"]
 edition = "2021"
 license = "gpl-3.0"
@@ -14,6 +14,10 @@ custom-npdm = "res/npdm/xc3.npdm"
 
 [lib]
 crate-type = ["cdylib"]
+
+[features]
+# Adds an "F" to the game version in the title screen. Useful to check whether the mod is active
+edit-version = []
 
 [dependencies]
 skyline = { git = "https://github.com/ultimate-research/skyline-rs.git" }

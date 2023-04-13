@@ -16,6 +16,19 @@ macro_rules! dbg_println {
 mod hash;
 mod loader;
 
+#[cfg(feature = "edit-version")]
+mod edit_version {
+    use skyline::hooks::InlineCtx;
+
+    static VERSION_TEMPLATE: &[u8] = b"%s %sF\0";
+
+    // Look for usages of nn::oe::GetDisplayVersion
+    #[skyline::hook(offset = 0x007bd574, inline)]
+    pub unsafe fn edit_version(ctx: &mut InlineCtx) {
+        *ctx.registers[1].x.as_mut() = VERSION_TEMPLATE.as_ptr() as u64;
+    }
+}
+
 // ml::DevFileArchiver::getFileInfo
 #[hook(offset = 0x01164f58)]
 unsafe fn block_file_load(p1: u64, p2: u32, name: *const u8, p4: u64) -> u32 {
@@ -48,6 +61,8 @@ pub fn main() {
     }
 
     skyline::install_hooks!(block_file_load);
+    #[cfg(feature = "edit-version")]
+    skyline::install_hook!(edit_version::edit_version);
 
     dbg_println!("[XC3-Files] Loaded!");
 }
