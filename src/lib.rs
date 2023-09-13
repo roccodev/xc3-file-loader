@@ -23,14 +23,14 @@ mod edit_version {
     static VERSION_TEMPLATE: &[u8] = b"%s %sF\0";
 
     // Look for usages of nn::oe::GetDisplayVersion
-    #[skyline::hook(offset = 0x008411d0, inline)]
+    #[skyline::hook(offset = 0x00841200, inline)]
     pub unsafe fn edit_version(ctx: &mut InlineCtx) {
         *ctx.registers[1].x.as_mut() = VERSION_TEMPLATE.as_ptr() as u64;
     }
 }
 
 // ml::DevFileArchiver::getFileInfo
-#[hook(offset = 0x01256be8)]
+#[hook(offset = 0x01256c28)]
 unsafe fn block_file_load(p1: u64, p2: u32, name: *const u8, p4: u64) -> u32 {
     let file_name = CStr::from_ptr(name as *const _);
     if let Ok(file_name) = file_name.to_str() {
