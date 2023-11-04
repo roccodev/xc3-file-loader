@@ -41,12 +41,15 @@ pub struct IdentityHasher(u64);
 
 pub type PreHashedSet<K> = std::collections::HashSet<K, IdentityHasher>;
 
-pub fn crc32(name: &str) -> u32 {
+/// Calculates a CRC-32 hash of the given string,
+/// converting any uppercase characters to lowercase beforehand.
+pub fn crc32_lowercase(name: &str) -> u32 {
     if name.is_empty() {
         return 0;
     }
     let mut hash = 0u32;
     for b in name.bytes() {
+        let b = if (b'A'..=b'Z').contains(&b) { b + 32 } else { b };
         let val = hash ^ b as u32;
         hash = (hash >> 8) ^ CRC_TABLE[val as usize & 0xff];
     }

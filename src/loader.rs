@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
 use std::mem::MaybeUninit;
 
-use crate::hash::{crc32, PreHashedSet};
+use crate::hash::{crc32_lowercase, PreHashedSet};
 
 /// Top-level paths to skip when matching romfs paths
 static TOP_LEVEL_BLACKLIST: [&str; 5] = ["bf3.ard", "bf3.arh", "movie", "sound", "skyline"];
@@ -36,7 +36,7 @@ impl FileLoader {
     }
 
     pub fn is_blocked(&self, file_name: &str) -> bool {
-        self.block_list.contains(&crc32(file_name))
+        self.block_list.contains(&crc32_lowercase(file_name))
     }
 
     unsafe fn import_dir(&mut self, path: &str, level: usize) -> Result<()> {
@@ -88,7 +88,7 @@ impl FileLoader {
     fn register_file(&mut self, path: &str) {
         assert!(path.len() >= 4); // rom:/<file name>
         let path = &path[4..];
-        let hash = crc32(path);
+        let hash = crc32_lowercase(path);
         dbg_println!("[XC3-Files] Registering {path}");
         if !self.block_list.insert(hash) {
             // The game also uses CRC-32 internally to cache resources. It's likely that
