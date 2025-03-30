@@ -1,31 +1,43 @@
+use anyhow::Result;
 use skyline::nn::fs;
 use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
+use std::hash::{BuildHasher, Hasher};
 use std::mem::MaybeUninit;
+use twox_hash::XxHash3_64;
 
-use crate::hash::{crc32_lowercase, PreHashedSet};
+use crate::dbg_println;
 
 /// Top-level paths to skip when matching romfs paths
 static TOP_LEVEL_BLACKLIST: [&str; 5] = ["bf3.ard", "bf3.arh", "movie", "sound", "skyline"];
 
 #[derive(Default)]
 pub struct FileLoader {
-    block_list: PreHashedSet<u32>,
+    block_list: PreHashedSet<u64>,
 }
 
 struct DirHandle {
     handle: fs::DirectoryHandle,
 }
 
-type Result<T> = std::result::Result<T, u32>;
+/// A [`Hasher`] implementation for pre-hashed keys.
+#[derive(Clone, Copy, Default)]
+struct IdentityHasher(u64);
+
+type PreHashedSet<K> = std::collections::HashSet<K, IdentityHasher>;
 
 macro_rules! nn_try {
     ($func:expr) => {
         match $func {
             0 => {}
-            code => return Err(code),
+            code => return Err(anyhow::anyhow!("FS error {code}")),
         }
     };
+}
+
+fn hash_lowercase(path: &str) -> u64 {
+    // TODO lowercase
+    XxHash3_64::oneshot(path.as_bytes())
 }
 
 impl FileLoader {
@@ -35,8 +47,12 @@ impl FileLoader {
         Ok(loader)
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.block_list.is_empty()
+    }
+
     pub fn is_blocked(&self, file_name: &str) -> bool {
-        self.block_list.contains(&crc32_lowercase(file_name))
+        self.block_list.contains(&hash_lowercase(file_name))
     }
 
     unsafe fn import_dir(&mut self, path: &str, level: usize) -> Result<()> {
@@ -88,12 +104,10 @@ impl FileLoader {
     fn register_file(&mut self, path: &str) {
         assert!(path.len() >= 4); // rom:/<file name>
         let path = &path[4..];
-        let hash = crc32_lowercase(path);
-        dbg_println!("[XC3-Files] Registering {path}");
+        let hash = hash_lowercase(path);
+        dbg_println!("[XCNX-Files] Registering {path}");
         if !self.block_list.insert(hash) {
-            // The game also uses CRC-32 internally to cache resources. It's likely that
-            // the game would have also run into issues with this collision.
-            dbg_println!("Hash collision for path {path} ({hash:08X})");
+            dbg_println!("Hash collision for path {path} ({hash:016X})");
         }
     }
 }
@@ -128,5 +142,25 @@ impl DirHandle {
 impl Drop for DirHandle {
     fn drop(&mut self) {
         unsafe { fs::CloseDirectory(self.handle) }
+    }
+}
+
+impl BuildHasher for IdentityHasher {
+    type Hasher = Self;
+
+    fn build_hasher(&self) -> Self::Hasher {
+        *self
+    }
+}
+
+impl Hasher for IdentityHasher {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        let mut long = [0u8; 8];
+        long.copy_from_slice(bytes);
+        self.0 = u64::from_le_bytes(long);
     }
 }
