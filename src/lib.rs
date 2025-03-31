@@ -8,42 +8,76 @@ mod util;
 use anyhow::{bail, Result};
 use loader::FileLoader;
 use skyline::nn;
-use util::Game;
+use util::{Game, GameConfig};
+
+const GAME_CONFIGS: [(Game, GameConfig); 4] = [
+    (
+        Game::Xc2,
+        GameConfig {
+            offset_lookup: 0x006b287c, // Last update: 2.1.0
+            top_level_blacklist: &["bf2.arh", "bf2.ard"],
+        },
+    ),
+    (
+        Game::Torna,
+        GameConfig {
+            offset_lookup: 0x008435c8, // Last update: 1.0.0
+            top_level_blacklist: &["ira.arh", "ira.ard"],
+        },
+    ),
+    (
+        Game::Xc3,
+        GameConfig {
+            offset_lookup: 0x01257798, // Last update: 2.2.0
+            top_level_blacklist: &["bf3.ard", "bf3.arh", "movie", "sound"],
+        },
+    ),
+    (
+        Game::Xcxde,
+        GameConfig {
+            offset_lookup: 0x013c9dc0, // Last update: 1.0.1
+            top_level_blacklist: &["sts.ard", "sts.arh", "movie", "sound"],
+        },
+    ),
+];
 
 static FILE_LOADER: OnceLock<FileLoader> = OnceLock::new();
 
 #[skyline::main(name = "xcnx_file_loader")]
 pub fn main() {
-    println!("[XCNX-Files] Loading...");
+    dbg_println!("[XCNX-Files] Loading...");
 
     if let Err(e) = run() {
         error_dialog(format!("[xcnx_file_loader] {e}"));
         return;
     }
 
-    println!("[XCNX-Files] Loaded!");
+    dbg_println!("[XCNX-Files] Loaded!");
 }
 
 fn run() -> Result<()> {
     let game = Game::detect()?;
+    let cfg = GAME_CONFIGS
+        .into_iter()
+        .find_map(|(g, cfg)| (g == game).then_some(cfg))
+        .unwrap();
 
     unsafe {
-        let loader = match FileLoader::import_all() {
+        let loader = match FileLoader::import_all(&cfg) {
             Ok(loader) => loader,
             Err(id) => {
                 bail!("FS read error: {id}");
             }
         };
         if loader.is_empty() {
-            dbg_println!("No files found");
-            return Ok(());
+            bail!("No files found");
         }
-        if let Err(_) = FILE_LOADER.set(loader) {
+        if FILE_LOADER.set(loader).is_err() {
             panic!("loader already init");
         }
     }
 
-    game.hook()?;
+    game.hook(&cfg)?;
 
     Ok(())
 }

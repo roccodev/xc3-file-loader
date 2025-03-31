@@ -4,12 +4,10 @@ use std::borrow::Borrow;
 use std::ffi::{CStr, CString};
 use std::hash::{BuildHasher, Hasher};
 use std::mem::MaybeUninit;
-use twox_hash::XxHash3_64;
+use xxhash_rust::xxh3::xxh3_64;
 
 use crate::dbg_println;
-
-/// Top-level paths to skip when matching romfs paths
-static TOP_LEVEL_BLACKLIST: [&str; 5] = ["bf3.ard", "bf3.arh", "movie", "sound", "skyline"];
+use crate::util::GameConfig;
 
 #[derive(Default)]
 pub struct FileLoader {
@@ -36,14 +34,13 @@ macro_rules! nn_try {
 }
 
 fn hash_lowercase(path: &str) -> u64 {
-    // TODO lowercase
-    XxHash3_64::oneshot(path.as_bytes())
+    xxh3_64(path.as_bytes())
 }
 
 impl FileLoader {
-    pub unsafe fn import_all() -> Result<Self> {
+    pub unsafe fn import_all(config: &GameConfig) -> Result<Self> {
         let mut loader = Self::default();
-        loader.import_dir("rom:/", 0)?;
+        loader.import_dir("rom:/", 0, config)?;
         Ok(loader)
     }
 
@@ -55,7 +52,7 @@ impl FileLoader {
         self.block_list.contains(&hash_lowercase(file_name))
     }
 
-    unsafe fn import_dir(&mut self, path: &str, level: usize) -> Result<()> {
+    unsafe fn import_dir(&mut self, path: &str, level: usize, config: &GameConfig) -> Result<()> {
         let handle = DirHandle::new(
             CString::new(if level != 0 {
                 &path[..path.len() - 1]
@@ -87,22 +84,24 @@ impl FileLoader {
             // The DirectoryEntry struct guarantees that the path is null-terminated
             let name = CStr::from_ptr(entry.name.as_ptr() as *const _);
             let name = name.to_string_lossy();
+            let name = name.borrow();
 
-            if level == 0 && TOP_LEVEL_BLACKLIST.contains(&name.borrow()) {
+            if level == 0 && (name == "skyline" || config.top_level_blacklist.contains(&name)) {
                 continue;
             }
 
             if ty == fs::DirectoryEntryType_DirectoryEntryType_Directory as u8 {
-                self.import_dir(&format!("{path}{name}/"), level + 1)?;
+                self.import_dir(&format!("{path}{name}/"), level + 1, config)?;
             } else {
-                self.register_file(&format!("{path}{name}"));
+                self.register_file(format!("{path}{name}"));
             }
         }
         Ok(())
     }
 
-    fn register_file(&mut self, path: &str) {
+    fn register_file(&mut self, mut path: String) {
         assert!(path.len() >= 4); // rom:/<file name>
+        path.make_ascii_lowercase();
         let path = &path[4..];
         let hash = hash_lowercase(path);
         dbg_println!("[XCNX-Files] Registering {path}");

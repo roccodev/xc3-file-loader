@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 skyline = { git = "https://github.com/ultimate-research/skyline-rs.git" }
 anyhow = "1.0"
-twox-hash = { version = "2.1", default-features = false, features = ["xxhash3_64", "std"] }
+xxhash-rust = { version = "0.8.15", features = ["xxh3"] }
 
 [profile.dev]
 panic = "abort"
