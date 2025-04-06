@@ -1,0 +1,35 @@
+name: Package
+
+on:
+  push:
+    branches: [master, "universal"]
+    tags: ["*.*.*"]
+  pull_request:
+
+jobs:
+  package:
+    name: Build & package
+    runs-on: ubuntu-latest
+    #if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Install devkitA64
+        run: |
+          wget https://apt.devkitpro.org/install-devkitpro-pacman
+          chmod +x ./install-devkitpro-pacman
+          sudo ./install-devkitpro-pacman
+          sudo dkp-pacman -Sy
+          sudo dkp-pacman -S devkitA64 devkit-env general-tools switch-tools
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: Build
+        run: bash build.sh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcnx-file-loader
+          path: target/skyline-pkg/*.zip
+    

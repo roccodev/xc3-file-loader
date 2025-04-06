@@ -15,14 +15,14 @@ const GAME_CONFIGS: [(Game, GameConfig); 4] = [
         Game::Xc2,
         GameConfig {
             offset_lookup: 0x006b287c, // Last update: 2.1.0
-            top_level_blacklist: &["bf2.arh", "bf2.ard"],
+            top_level_blacklist: &["bf2.arh", "bf2.ard", "stream"],
         },
     ),
     (
         Game::Torna,
         GameConfig {
             offset_lookup: 0x008435c8, // Last update: 1.0.0
-            top_level_blacklist: &["ira.arh", "ira.ard"],
+            top_level_blacklist: &["ira.arh", "ira.ard", "stream"],
         },
     ),
     (
