@@ -85,7 +85,7 @@ fn run() -> Result<()> {
 fn error_dialog(mut message: String) {
     message.truncate(2047);
     let message = CString::new(message).unwrap();
-    let code = (1 << 9) | 168; // 168 = userland crash
+    let code = (1 << 9) | 168; // 168 = userland error
     unsafe {
         let mut error = nn::err::ApplicationErrorArg::new();
         error.SetApplicationErrorCodeNumber(code);

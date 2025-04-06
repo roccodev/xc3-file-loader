@@ -1,32 +1,43 @@
-#!/usr/bin/sh
+#!/usr/bin/bash
 set -e
 
 if ! type "cargo-skyline" > /dev/null; then
   cargo install --git https://github.com/jam1garner/cargo-skyline
 fi
 
-echo "Building release.zip..."
-
-cargo +skyline skyline package -s "https://github.com/RoccoDev/skyline/releases/download/cross-game-local-logging/release.zip"
-
-echo "Building release-version-edit.zip..."
-
-cargo +skyline skyline build --release --features edit-version
-
+skyline_url="https://github.com/roccodev/skyline/releases/download/cross-game-local-logging/release.zip"
 cwd=$(pwd)
-game_dir="atmosphere/contents/010074F013262000/romfs/skyline/plugins"
 target=$cwd/target
 cargo_target=${CARGO_TARGET_DIR:-$target}
+out_base="xcnx-file-loader"
+npdmtool=${NPDMTOOL:-$(which npdmtool)}
 
-mkdir -p $target && cd $target
-cp release.zip $cargo_target/aarch64-skyline-switch/release/release-version-edit.zip
-cd $cargo_target/aarch64-skyline-switch/release
-mkdir -p $game_dir
-cp libxc3_file_loader.nro $game_dir
-zip release-version-edit.zip $game_dir/libxc3_file_loader.nro
+results=(
+    "xc2-ww 0100E95004038000"
+    "xc2-jp 0100F3400332C000"
+    "torna 0100C9F009F7A000"
+    "xc3 010074F013262000"
+    "xcxde 0100453019AA8000"
+)
 
-cd $target
-mv $cargo_target/aarch64-skyline-switch/release/release-version-edit.zip .
+mkdir -p "$cargo_target/skyline-pkg"
+mkdir -p "$cargo_target/skyline-pkg/npdm"
+
+for x in "${results[@]}"
+do
+  set -- $x
+  zip_path="$cargo_target/skyline-pkg/$out_base-$1.zip"
+  game_dir="atmosphere/contents/$2"
+  out_npdm="$cargo_target/skyline-pkg/npdm/$1.npdm"
+
+  echo "Building $out_base-$1.zip..."
+  echo "$skyline_url"
+  cargo skyline package -t $2 -o "$zip_path"
+  echo "Building $1.npdm..."
+  "$NPDMTOOL" "res/npdm/$1.json" "$out_npdm"
+  zip "$zip_path" "$out_npdm"
+  printf "@ ${out_npdm#/}\n@=$game_dir/exefs/main.npdm\n" | zipnote -w "$zip_path"
+done
 
 cd $cwd
 
