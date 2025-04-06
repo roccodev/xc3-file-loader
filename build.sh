@@ -2,11 +2,11 @@
 set -e
 
 if ! type "cargo-skyline" > /dev/null; then
-  cargo install --git https://github.com/jam1garner/cargo-skyline
-  cargo-skyline skyline update-std 
+  cargo install --git https://github.com/roccodev/cargo-skyline --branch minor/remove-npdm-extraction
+  cargo-skyline skyline update-std
 fi
 
-skyline_url="https://github.com/roccodev/skyline/releases/download/cross-game-local-logging/release.zip"
+skyline_url="https://github.com/roccodev/skyline/releases/download/mod0-align/release.zip"
 cwd=$(pwd)
 target=$cwd/target
 cargo_target=${CARGO_TARGET_DIR:-$target}
@@ -32,7 +32,7 @@ do
   out_npdm="$cargo_target/skyline-pkg/npdm/$1.npdm"
 
   echo "Building $out_base-$1.zip..."
-  cargo skyline package -t $2 -o "$zip_path"
+  cargo skyline package --skyline-release "$skyline_url" -t $2 -o "$zip_path"
   echo "Building $1.npdm..."
   "$NPDMTOOL" "res/npdm/$1.json" "$out_npdm"
   zip "$zip_path" "$out_npdm"
