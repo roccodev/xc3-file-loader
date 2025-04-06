@@ -25,5 +25,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xcnx-file-loader
-          path: target/skyline-pkg/*.zip
+          path: target/skyline-pkg/xcnx-file-loader-*.zip
+      - name: Upload tester zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcnx-file-loader-test-all
+          path: target/skyline-pkg/test-all.zip
     

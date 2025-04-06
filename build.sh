@@ -14,15 +14,16 @@ out_base="xcnx-file-loader"
 npdmtool=${NPDMTOOL:-$(which npdmtool)}
 
 results=(
-    "xc2-ww 0100E95004038000"
-    "xc2-jp 0100F3400332C000"
-    "torna 0100C9F009F7A000"
-    "xc3 010074F013262000"
-    "xcxde 0100453019AA8000"
+    "xc2-ww 0100E95004038000 menu/font/standard.wifnt"
+    "xc2-jp 0100F3400332C000 menu/font/standard.wifnt"
+    "torna 0100C9F009F7A000 menu_ira/font/standard.wifnt"
+    "xc3 010074F013262000 menu/font/standard.wifnt"
+    "xcxde 0100453019AA8000 ui/font/unique.wifnt"
 )
 
 mkdir -p "$cargo_target/skyline-pkg"
 mkdir -p "$cargo_target/skyline-pkg/npdm"
+mkdir -p "$cargo_target/skyline-pkg/tester-zip"
 
 for x in "${results[@]}"
 do
@@ -37,7 +38,19 @@ do
   "$NPDMTOOL" "res/npdm/$1.json" "$out_npdm"
   zip "$zip_path" "$out_npdm"
   printf "@ ${out_npdm#/}\n@=$game_dir/exefs/main.npdm\n" | zipnote -w "$zip_path"
+
+  # Tester zip
+  unzip -o -d "$cargo_target/tester-zip" "$zip_path"
+  tester_base="$cargo_target/tester-zip/$game_dir/romfs"
+  mkdir -p $(dirname "$tester_base/$3")
+  cp res/test/test_font.wifnt "$tester_base/$3"
 done
+
+echo "Building tester zip..."
+cd "$cargo_target/tester-zip" 
+zip -r test-all.zip .
+mv test-all.zip ../skyline-pkg
+cd -
 
 cd $cwd
 
