@@ -3,6 +3,7 @@ set -e
 
 if ! type "cargo-skyline" > /dev/null; then
   cargo install --git https://github.com/jam1garner/cargo-skyline
+  cargo-skyline skyline update-std 
 fi
 
 skyline_url="https://github.com/roccodev/skyline/releases/download/cross-game-local-logging/release.zip"
@@ -31,7 +32,6 @@ do
   out_npdm="$cargo_target/skyline-pkg/npdm/$1.npdm"
 
   echo "Building $out_base-$1.zip..."
-  echo "$skyline_url"
   cargo skyline package -t $2 -o "$zip_path"
   echo "Building $1.npdm..."
   "$NPDMTOOL" "res/npdm/$1.json" "$out_npdm"
