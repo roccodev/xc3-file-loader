@@ -16,7 +16,7 @@
 	"disable_device_address_space_merge": true,
 	"signature_key_generation": 0,
 	"filesystem_access": {
-		"permissions": "0xFFFFFFFFFFFFFFFF"
+		"permissions": "0x4000000000000000"
 	},
 	"service_access": [
 		"*"
