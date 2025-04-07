@@ -21,7 +21,7 @@ const GAME_CONFIGS: [(Game, GameConfig); 4] = [
     (
         Game::Torna,
         GameConfig {
-            offset_lookup: 0x008435c8, // Last update: 1.0.0
+            offset_lookup: 0x006b2768, // Last update: 1.0.2
             top_level_blacklist: &["ira.arh", "ira.ard", "stream"],
         },
     ),
